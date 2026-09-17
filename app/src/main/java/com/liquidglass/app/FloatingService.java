@@ -3,9 +3,7 @@ package com.liquidglass.app;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.IBinder;
-import android.provider.Settings;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -47,6 +45,12 @@ public class FloatingService extends Service {
 
         webView.setBackgroundColor(Color.TRANSPARENT);
 
+        // Keep WebGL hardware accelerated
+        webView.setLayerType(
+                View.LAYER_TYPE_HARDWARE,
+                null
+        );
+
         webView.loadUrl(
                 "file:///android_asset/index.html"
         );
@@ -68,93 +72,108 @@ public class FloatingService extends Service {
         webView.setOnTouchListener(
                 (view, event) -> {
 
-            switch (event.getAction()) {
+                    switch (event.getAction()) {
 
-                case MotionEvent.ACTION_DOWN:
+                        case MotionEvent.ACTION_DOWN:
 
-                    startX = params.x;
-                    startY = params.y;
+                            startX = params.x;
+                            startY = params.y;
 
-                    touchX = event.getRawX();
-                    touchY = event.getRawY();
+                            touchX = event.getRawX();
+                            touchY = event.getRawY();
 
-                    return true;
-
-
-                case MotionEvent.ACTION_MOVE:
-
-                    params.x =
-                            startX +
-                            (int)(event.getRawX() - touchX);
-
-                    params.y =
-                            startY +
-                            (int)(event.getRawY() - touchY);
-
-                    windowManager.updateViewLayout(
-                            webView,
-                            params
-                    );
-
-                    return true;
+                            return true;
 
 
-                case MotionEvent.ACTION_UP:
+                        case MotionEvent.ACTION_MOVE:
 
-                    float dx =
-                            Math.abs(
-                                event.getRawX() - touchX
+                            params.x =
+                                    startX +
+                                    (int)(
+                                        event.getRawX()
+                                        - touchX
+                                    );
+
+                            params.y =
+                                    startY +
+                                    (int)(
+                                        event.getRawY()
+                                        - touchY
+                                    );
+
+                            windowManager.updateViewLayout(
+                                    webView,
+                                    params
                             );
 
-                    float dy =
-                            Math.abs(
-                                event.getRawY() - touchY
-                            );
+                            return true;
 
-                    if (dx < 20 && dy < 20) {
 
-                        long now =
-                                System.currentTimeMillis();
+                        case MotionEvent.ACTION_UP:
 
-                        if (now - lastTap < 350) {
+                            float dx =
+                                    Math.abs(
+                                        event.getRawX()
+                                        - touchX
+                                    );
 
-                            openYouTube();
+                            float dy =
+                                    Math.abs(
+                                        event.getRawY()
+                                        - touchY
+                                    );
 
-                            lastTap = 0;
+                            if (dx < 20 && dy < 20) {
 
-                        } else {
+                                handleTap();
+                            }
 
-                            lastTap = now;
-
-                            webView.postDelayed(
-                                () -> {
-
-                                    if (
-                                        lastTap != 0 &&
-                                        System.currentTimeMillis()
-                                        - lastTap >= 350
-                                    ) {
-
-                                        toggleExpanded();
-
-                                        lastTap = 0;
-                                    }
-
-                                },
-                                360
-                            );
-                        }
+                            return true;
                     }
 
                     return true;
-            }
-
-            return true;
-        });
+                }
+        );
 
         windowManager.addView(
                 webView,
                 params
+        );
+    }
+
+
+    private void handleTap() {
+
+        long now =
+                System.currentTimeMillis();
+
+        if (now - lastTap < 350) {
+
+            lastTap = 0;
+
+            openYouTube();
+
+            return;
+        }
+
+        lastTap = now;
+
+        webView.postDelayed(
+                () -> {
+
+                    if (
+                        lastTap != 0 &&
+                        System.currentTimeMillis()
+                        - lastTap >= 350
+                    ) {
+
+                        toggleExpanded();
+
+                        lastTap = 0;
+                    }
+
+                },
+                360
         );
     }
 
@@ -201,24 +220,9 @@ public class FloatingService extends Service {
 
                 startActivity(intent);
 
-            } else {
-
-                Intent browser =
-                        new Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse(
-                                "https://www.youtube.com/"
-                            )
-                        );
-
-                browser.addFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK
-                );
-
-                startActivity(browser);
             }
 
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
     }
 
@@ -226,14 +230,14 @@ public class FloatingService extends Service {
     @Override
     public void onDestroy() {
 
-        super.onDestroy();
-
         if (webView != null) {
 
             windowManager.removeView(webView);
 
             webView.destroy();
         }
+
+        super.onDestroy();
     }
 
 

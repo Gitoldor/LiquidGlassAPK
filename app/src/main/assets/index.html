@@ -1,16 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
 
 <style>
-html,body{
+
+html,
+body{
     margin:0;
     width:100%;
     height:100%;
-    background:transparent;
     overflow:hidden;
-    font-family:Arial,sans-serif;
+    background:transparent;
 }
 
 #root{
@@ -19,34 +22,50 @@ html,body{
     height:100%;
 }
 
+/* Something for the glass to refract */
 #background{
     position:absolute;
     inset:0;
-    background:transparent;
+
+    background:
+        linear-gradient(
+            135deg,
+            #0b5cff,
+            #8b5cf6,
+            #00c6ff
+        );
 }
 
 #glass{
+
     position:absolute;
-    left:20px;
-    top:20px;
-    width:220px;
-    height:80px;
+
+    left:0;
+    top:0;
+
+    width:100%;
+    height:100%;
+
+    box-sizing:border-box;
 
     display:flex;
     align-items:center;
     justify-content:center;
 
     color:white;
-    font-size:18px;
+
+    font-family:Arial,sans-serif;
+    font-size:16px;
     font-weight:600;
 
-    border-radius:40px;
+    border-radius:999px;
 
-    background:rgba(255,255,255,.12);
+    background:rgba(255,255,255,0.08);
 
-    data-dynamic:true;
 }
+
 </style>
+
 </head>
 
 <body>
@@ -57,20 +76,20 @@ html,body{
 
     <div
         id="glass"
-        class="my-glass"
         data-config='{
-            "blurAmount":0.25,
-            "refraction":0.8,
+            "blurAmount":0.35,
+            "refraction":0.9,
             "chromAberration":0.08,
-            "edgeHighlight":0.12,
-            "specular":0.2,
+            "edgeHighlight":0.18,
+            "specular":0.25,
             "fresnel":1,
             "cornerRadius":40,
             "zRadius":40,
             "opacity":0.9,
             "shadowOpacity":0.25
-        }'>
-        ◉ Liquid Glass
+        }'
+    >
+        ◉
     </div>
 
 </div>
@@ -80,17 +99,17 @@ html,body{
 import { LiquidGlass } from
 "https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js";
 
-const glass =
-document.querySelector("#glass");
-
 const root =
 document.querySelector("#root");
 
+const glass =
+document.querySelector("#glass");
+
 await LiquidGlass.init({
 
-    root:root,
+    root: root,
 
-    glassElements:[
+    glassElements: [
         glass
     ]
 
