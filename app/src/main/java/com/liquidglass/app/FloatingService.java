@@ -3,6 +3,7 @@ package com.liquidglass.app;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.IBinder;
 import android.view.Gravity;
 import android.view.MotionEvent;
@@ -45,7 +46,6 @@ public class FloatingService extends Service {
 
         webView.setBackgroundColor(Color.TRANSPARENT);
 
-        // Keep WebGL hardware accelerated
         webView.setLayerType(
                 View.LAYER_TYPE_HARDWARE,
                 null
@@ -209,20 +209,49 @@ public class FloatingService extends Service {
             Intent intent =
                     getPackageManager()
                     .getLaunchIntentForPackage(
-                        "com.google.android.youtube"
+                            "com.google.android.youtube"
                     );
 
             if (intent != null) {
 
                 intent.addFlags(
-                    Intent.FLAG_ACTIVITY_NEW_TASK
+                        Intent.FLAG_ACTIVITY_NEW_TASK
                 );
 
                 startActivity(intent);
 
+            } else {
+
+                Intent browser =
+                        new Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse(
+                                        "https://www.youtube.com/"
+                                )
+                        );
+
+                browser.addFlags(
+                        Intent.FLAG_ACTIVITY_NEW_TASK
+                );
+
+                startActivity(browser);
             }
 
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+
+            Intent browser =
+                    new Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse(
+                                    "https://www.youtube.com/"
+                            )
+                    );
+
+            browser.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+            );
+
+            startActivity(browser);
         }
     }
 
