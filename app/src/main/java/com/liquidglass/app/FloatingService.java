@@ -3,25 +3,31 @@ package com.liquidglass.app;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.os.IBinder;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.MotionEvent;
+import android.view.View;
 import android.view.WindowManager;
-import android.widget.TextView;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 
 public class FloatingService extends Service {
 
     private WindowManager windowManager;
-    private TextView button;
+    private WebView webView;
     private WindowManager.LayoutParams params;
 
     private int startX;
     private int startY;
+
     private float touchX;
     private float touchY;
 
     private boolean expanded = false;
+
+    private long lastTap = 0;
 
     @Override
     public void onCreate() {
@@ -30,18 +36,20 @@ public class FloatingService extends Service {
         windowManager =
                 (WindowManager) getSystemService(WINDOW_SERVICE);
 
-        button = new TextView(this);
+        webView = new WebView(this);
 
-        button.setText("◉");
-        button.setTextColor(Color.WHITE);
-        button.setTextSize(24);
-        button.setGravity(Gravity.CENTER);
+        WebSettings settings = webView.getSettings();
 
-        GradientDrawable glass = new GradientDrawable();
-        glass.setColor(Color.argb(170, 255, 255, 255));
-        glass.setShape(GradientDrawable.OVAL);
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setAllowContentAccess(true);
 
-        button.setBackground(glass);
+        webView.setBackgroundColor(Color.TRANSPARENT);
+
+        webView.loadUrl(
+                "file:///android_asset/index.html"
+        );
 
         params = new WindowManager.LayoutParams(
                 70,
@@ -51,11 +59,14 @@ public class FloatingService extends Service {
                 android.graphics.PixelFormat.TRANSLUCENT
         );
 
-        params.gravity = Gravity.TOP | Gravity.START;
+        params.gravity =
+                Gravity.TOP | Gravity.START;
+
         params.x = 250;
         params.y = 500;
 
-        button.setOnTouchListener((view, event) -> {
+        webView.setOnTouchListener(
+                (view, event) -> {
 
             switch (event.getAction()) {
 
@@ -69,32 +80,70 @@ public class FloatingService extends Service {
 
                     return true;
 
+
                 case MotionEvent.ACTION_MOVE:
 
-                    params.x = startX +
+                    params.x =
+                            startX +
                             (int)(event.getRawX() - touchX);
 
-                    params.y = startY +
+                    params.y =
+                            startY +
                             (int)(event.getRawY() - touchY);
 
                     windowManager.updateViewLayout(
-                            button,
+                            webView,
                             params
                     );
 
                     return true;
 
+
                 case MotionEvent.ACTION_UP:
 
                     float dx =
-                            Math.abs(event.getRawX() - touchX);
+                            Math.abs(
+                                event.getRawX() - touchX
+                            );
 
                     float dy =
-                            Math.abs(event.getRawY() - touchY);
+                            Math.abs(
+                                event.getRawY() - touchY
+                            );
 
-                    // If finger barely moved, treat it as a tap
                     if (dx < 20 && dy < 20) {
-                        toggleExpanded();
+
+                        long now =
+                                System.currentTimeMillis();
+
+                        if (now - lastTap < 350) {
+
+                            openYouTube();
+
+                            lastTap = 0;
+
+                        } else {
+
+                            lastTap = now;
+
+                            webView.postDelayed(
+                                () -> {
+
+                                    if (
+                                        lastTap != 0 &&
+                                        System.currentTimeMillis()
+                                        - lastTap >= 350
+                                    ) {
+
+                                        toggleExpanded();
+
+                                        lastTap = 0;
+                                    }
+
+                                },
+                                360
+                            );
+                        }
                     }
 
                     return true;
@@ -103,7 +152,10 @@ public class FloatingService extends Service {
             return true;
         });
 
-        windowManager.addView(button, params);
+        windowManager.addView(
+                webView,
+                params
+        );
     }
 
 
@@ -116,44 +168,58 @@ public class FloatingService extends Service {
             params.width = 220;
             params.height = 80;
 
-            button.setText("  ◉   Liquid Glass");
-
-            GradientDrawable glass =
-                    new GradientDrawable();
-
-            glass.setColor(
-                    Color.argb(190, 255, 255, 255)
-            );
-
-            glass.setCornerRadius(40);
-
-            button.setBackground(glass);
-
         } else {
 
             expanded = false;
 
             params.width = 70;
             params.height = 70;
-
-            button.setText("◉");
-
-            GradientDrawable glass =
-                    new GradientDrawable();
-
-            glass.setColor(
-                    Color.argb(170, 255, 255, 255)
-            );
-
-            glass.setShape(GradientDrawable.OVAL);
-
-            button.setBackground(glass);
         }
 
         windowManager.updateViewLayout(
-                button,
+                webView,
                 params
         );
+    }
+
+
+    private void openYouTube() {
+
+        try {
+
+            Intent intent =
+                    getPackageManager()
+                    .getLaunchIntentForPackage(
+                        "com.google.android.youtube"
+                    );
+
+            if (intent != null) {
+
+                intent.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                );
+
+                startActivity(intent);
+
+            } else {
+
+                Intent browser =
+                        new Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse(
+                                "https://www.youtube.com/"
+                            )
+                        );
+
+                browser.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK
+                );
+
+                startActivity(browser);
+            }
+
+        } catch (Exception e) {
+        }
     }
 
 
@@ -162,14 +228,18 @@ public class FloatingService extends Service {
 
         super.onDestroy();
 
-        if (button != null) {
-            windowManager.removeView(button);
+        if (webView != null) {
+
+            windowManager.removeView(webView);
+
+            webView.destroy();
         }
     }
 
 
     @Override
     public IBinder onBind(Intent intent) {
+
         return null;
     }
 }

@@ -1,32 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
 html,body{
     margin:0;
     width:100%;
     height:100%;
-    background:#f2f2f2;
+    background:transparent;
+    overflow:hidden;
     font-family:Arial,sans-serif;
 }
 
-body{
+#root{
+    position:relative;
+    width:100%;
+    height:100%;
+}
+
+#background{
+    position:absolute;
+    inset:0;
+    background:transparent;
+}
+
+#glass{
+    position:absolute;
+    left:20px;
+    top:20px;
+    width:220px;
+    height:80px;
+
     display:flex;
     align-items:center;
     justify-content:center;
-}
 
-h1{
-    font-size:24px;
+    color:white;
+    font-size:18px;
+    font-weight:600;
+
+    border-radius:40px;
+
+    background:rgba(255,255,255,.12);
+
+    data-dynamic:true;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Liquid Glass</h1>
+<div id="root">
+
+    <div id="background"></div>
+
+    <div
+        id="glass"
+        class="my-glass"
+        data-config='{
+            "blurAmount":0.25,
+            "refraction":0.8,
+            "chromAberration":0.08,
+            "edgeHighlight":0.12,
+            "specular":0.2,
+            "fresnel":1,
+            "cornerRadius":40,
+            "zRadius":40,
+            "opacity":0.9,
+            "shadowOpacity":0.25
+        }'>
+        ◉ Liquid Glass
+    </div>
+
+</div>
+
+<script type="module">
+
+import { LiquidGlass } from
+"https://cdn.jsdelivr.net/npm/@ybouane/liquidglass/dist/index.js";
+
+const glass =
+document.querySelector("#glass");
+
+const root =
+document.querySelector("#root");
+
+await LiquidGlass.init({
+
+    root:root,
+
+    glassElements:[
+        glass
+    ]
+
+});
+
+</script>
 
 </body>
 </html>
